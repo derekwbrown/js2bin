@@ -267,12 +267,17 @@ class NodeJsBuilder {
   // 3. install _third_party_main.js
   // 4. process mainAppFile (gzip, base64 encode it) - could be a placeholder file
   // 5. kick off ./configure & build
-  buildFromSource(uploadBuild, cache, container, arch, ptrCompression) {
+  buildFromSource(uploadBuild, cache, container, arch, ptrCompression, debug) {
     const makeArgs = isWindows ? ['x64', 'no-cctest'] : [`-j${os.cpus().length}`];
     const configArgs = [];
     if(ptrCompression) {
       if(isWindows) makeArgs.push('v8_ptr_compress');
       else          configArgs.push('--experimental-enable-pointer-compression');
+    }
+    if(isWindows && debug){
+      // debug flag will be ignored for non windows.
+      this.resultFile = join(this.nodeSrcDir, 'Debug', 'node.exe') ;
+      makeArgs.push('debug');
     }
     return this.printDiskUsage()
       .then(() => this.downloadExpandNodeSource())

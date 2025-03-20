@@ -72,6 +72,7 @@ function parseArgs() {
   args.platform = (args.platform || NodeJsBuilder.platform());
   args.container = (args.container || false);
   args.ptrCompression = (args['pointer-compress'] == 'true');
+  args.debug = (args.debug || false);
   return args;
 }
 
@@ -116,7 +117,7 @@ if (args.build) {
         lastBuilder = builder;
         p = p.then(() => {
           log(`building for version=${version}, size=${size} arch=${arch}`);
-          return builder.buildFromSource(args.upload, args.cache, args.container, arch, args.ptrCompression);
+          return builder.buildFromSource(args.upload, args.cache, args.container, arch, args.ptrCompression, args.debug);
         });
       })
     });
