@@ -233,7 +233,7 @@ class NodeJsBuilder {
   }
 
   printDiskUsage() {
-    if (isWindows) { return runCommand('fsutil', ['volume', 'diskfree', 'd:']); }
+    if (isWindows) { return Promise.resolve("Seriously?"); }
     return runCommand('df', ['-h']);
   }
 

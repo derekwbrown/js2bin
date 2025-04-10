@@ -36,6 +36,7 @@ command-args: take the form of --name=value
   --container: (opt) build using builder container rather than local dev tools
   --arch:      (opt) build on a specific architecture
   --pointer-compress:  (opt) whether to enable pointer compression
+  --debug:     (opt) whether to build in debug mode (windows only)
 
 --help: print this help message
 `);
@@ -72,7 +73,13 @@ function parseArgs() {
   args.platform = (args.platform || NodeJsBuilder.platform());
   args.container = (args.container || false);
   args.ptrCompression = (args['pointer-compress'] == 'true');
+
+  if(args.platform !== 'windows' && args.debug) {
+    return usage(`debug build only supported on windows (platform = ${args.platform})`);
+  }
+    
   args.debug = (args.debug || false);
+
   return args;
 }
 
