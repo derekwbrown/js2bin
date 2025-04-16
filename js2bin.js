@@ -23,6 +23,8 @@ command-args: take the form of --name=value
               e.g. --dir=/tmp/js2bin
   --cache     (opt) Cache any pre-built binaries used, to avoid redownload
   --arch:     (opt) Architecture to build for
+  --nodedir:  (opt) path to node binaries (instead of downloading)
+              e.g. --nodedir=/path/to/node/binaries
 
 --ci: build NodeJS with preallocated space for embedding applications
   --node: NodeJS version to build from source, can specify more than one. 
@@ -88,6 +90,9 @@ function asArray(val) {
 }
 
 const args = parseArgs();
+console.log(`args: ${JSON.stringify(args)}`);
+
+
 let p = Promise.resolve();
 
 if (args.build) {
@@ -106,8 +111,8 @@ if (args.build) {
       p = p.then(() => {
         const arch = args.arch || 'x64';
         log(`building for version=${version}, plat=${plat} app=${app}} arch=${arch}`);
-        const outName = args.name ? `${args.name}-${plat}-${arch}` : undefined;
-        return builder.buildFromCached(plat, arch, outName, args.cache, args.size);
+        
+        return builder.buildFromCached(plat, arch, args);
       });
     });
   });

@@ -319,7 +319,10 @@ class NodeJsBuilder {
       .catch(err => this.printDiskUsage().then(() => { throw err; }));
   }
 
-  buildFromCached(platform = 'linux', arch = 'x64', outFile = undefined, cache = false, size) {
+  buildFromCached(platform = 'linux', arch = 'x64', args){ //} outFile = undefined, cache = false, size) {
+    let outFile = args.name ? `${args.name}-${platform}-${arch}` : undefined;
+    const cache = args.cache || false;
+    const size = args.size || undefined;
     const mainAppFileCont = this.getAppContentToBundle();
     this.placeHolderSizeMB = Math.ceil(mainAppFileCont.length / 1024 / 1024); // 2, 4, 6, 8...
     if (this.placeHolderSizeMB % 2 !== 0) {
@@ -327,29 +330,44 @@ class NodeJsBuilder {
     }
     if (size) this.placeHolderSizeMB = parseInt( size.toUpperCase().replaceAll('MB', '') )
 
-    return this.downloadCachedBuild(platform, arch)
-      .then(cachedFile => {
-        const placeholder = this.getPlaceholderContent(this.placeHolderSizeMB);
+    let cachedFile = undefined;
+    if(!args.nodedir){
+      console.log(`node dir not specified, using default node dir`);
+      process.exit(1);
+      this.downloadCachedBuild(platform, arch).then(result => {
+        cachedFile = result;
+        log(`cached file=${cachedFile}`);
+      })
+        .catch(err => {
+          log(`failed to download cached build, err=${err}`);
+          throw err;
+        });
+    } else {
+      cachedFile = join(args.nodedir, "node.exe");
+      log(`cached file=${cachedFile}`);
+    }
+    
+    const placeholder = this.getPlaceholderContent(this.placeHolderSizeMB);
 
-        outFile = resolve(outFile || `app-${platform}-${arch}-${this.version}`);
-        const execFileCont = fs.readFileSync(cachedFile);
-        if (!cache) {
-          fs.unlinkSync(cachedFile);
-        }
+    outFile = resolve(outFile || `app-${platform}-${arch}-${this.version}`);
+    const execFileCont = fs.readFileSync(cachedFile);
+    if (!cache) {
+      fs.unlinkSync(cachedFile);
+    }
 
-        const placeholderIdx = execFileCont.indexOf(placeholder);
-        if (placeholderIdx < 0) {
-          throw new Error(`Could not find placeholder in file=${cachedFile}`);
-        }
+    const placeholderIdx = execFileCont.indexOf(placeholder);
+    if (placeholderIdx < 0) {
+      throw new Error(`Could not find placeholder in file=${cachedFile}`);
+    }
 
-        execFileCont.fill(0, placeholderIdx, placeholderIdx + placeholder.length);
-        execFileCont.write(mainAppFileCont, placeholderIdx);
-        log(`writing native binary ${outFile}`);
-        return mkdirp(dirname(outFile))
-          .then(() => fs.writeFileSync(outFile, execFileCont));
-      });
+    execFileCont.fill(0, placeholderIdx, placeholderIdx + placeholder.length);
+    execFileCont.write(mainAppFileCont, placeholderIdx);
+    log(`writing native binary ${outFile}`);
+    return mkdirp(dirname(outFile))
+      .then(() => fs.writeFileSync(outFile, execFileCont));
+  
   }
-}
+} // end class NodeJsBuilder
 
 module.exports = {
   NodeJsBuilder
